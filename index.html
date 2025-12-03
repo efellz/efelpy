@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@efel</title>
+    <meta property="og:title" content="@efel">
+    <meta property="og:description" content="#1 fan">
+    <meta property="og:color" content="#0000FF">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/jpeg" href="https://i.pinimg.com/736x/fd/dc/36/fddc36a4774cad74d75c3bcc2ee7338b.jpg">
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const frames = ["|  Efel", "/  Efel ", "-  Efel", "\\  Efel"];
+            let i = 0;
+            setInterval(() => {
+                document.title = frames[i % frames.length];
+                i++;
+            }, 80);
+        });
+    </script>
+    <link href="/dist/output.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { cursor: none !important; }
+        body, html { cursor: none !important; overflow-x: hidden; }
+        #custom-cursor { position: fixed; width: 20px; height: 20px; border: 2px solid rgba(30,215,96,0.85); border-radius: 50%; pointer-events: none; z-index: 999999; left: 0; top: 0; transform: translate(-50%, -50%); transition: width 0.18s ease, height 0.18s ease; }
+        #custom-cursor.hover { width: 36px; height: 36px; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: #0a0a0a;
+            color: #e4e4e7; 
+            min-height: 100vh; 
+        }
+        #weather-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .glass { 
+            background: rgba(20,20,30,0.55); 
+            backdrop-filter: blur(16px); 
+            border: 1px solid rgba(255,255,255,0.08); 
+            border-radius: 1.4rem; 
+            box-shadow: 0 0 25px rgba(0,0,0,0.45); 
+        }
+        .icon-button { 
+            background: rgba(255,255,255,0.03); 
+            transition: background 0.2s ease;
+        }
+        .icon-button:hover { background: rgba(255,255,255,0.1); }
+        .icon-button img { width: 26px; height: 26px; filter: brightness(0) invert(1); }
+        .status-icon-glass { position: absolute; width: 28px; height: 28px; background: rgba(20,20,30,0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; bottom: -8px; right: -8px; z-index: 1; }
+        .status-icon { width: 24px; height: 24px; position: absolute; bottom: -6px; right: -6px; z-index: 2; }
+        .progress-bar { height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden; }
+        .progress-fill { height:100%; background:#1ed760; width:0%; transition: width 0.3s ease; box-shadow: 0 0 8px #1ed760; }
+        .lyrics-container { position: relative; max-height: 386px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(30,215,96,0.3) transparent; padding: 12px; scroll-behavior: smooth; z-index: 5; }
+        .lyric-line { padding: 6px 10px; opacity: 0.4; transition: all 0.4s ease; cursor: pointer; border-radius: 6px; margin: 2px 0; font-size: 0.875rem; line-height: 1.5; }
+        .lyric-line.active { opacity: 1; font-weight: 600; color: #1ed760; background: rgba(30,215,96,0.08); transform: translateX(4px); }
+        .album-art-compact { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; flex-shrink: 0; box-shadow: 0 0 0 2px rgba(255,255,255,0.15); cursor: pointer; transition: all 0.3s ease; }
+        .album-art-compact:hover { box-shadow: 0 0 0 2px #1ed760; transform: scale(1.05); }
+        .song-title { font-size: 1rem; font-weight: 700; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .song-artist { font-size: 0.875rem; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .spotify-icon { width: 20px; height: 20px; opacity: 0.8; }
+        .layout-wrapper { position: relative; z-index: 10; }
+        .layout-container { display: flex; gap: 24px; align-items: start; justify-content: center; padding: 20px; max-width: 1000px; margin: 0 auto; }
+        .discord-card-wrapper { position: relative; }
+        .game-activity-centered { position: absolute; bottom: calc(100% + 20px); left: 50%; transform: translateX(-50%); width: 100%; padding: 1.25rem; z-index: 11; }
+        .left-column { display: flex; flex-direction: column; gap: 24px; }
+        #weather-toggle-button { position: fixed; top: 20px; left: 20px; z-index: 100; padding: 12px 16px; font-weight: 600; color: #e4e4e7; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; border-radius: 1.4rem; }
+        #weather-toggle-button img { width: 20px; height: 20px; filter: brightness(0) invert(1); }
+        @media (max-width: 1024px) { 
+            .layout-container { flex-direction: column; align-items: center; }
+            .game-activity-centered { position: static; transform: none; margin-bottom: 24px; width: 100%; }
+        }
+        
+        #start-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.96); 
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transition: opacity 1s ease, visibility 1s ease;
+        }
+        #start-menu.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        #video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+            opacity: 0.5;
+            transition: opacity 1s ease;
+            filter: brightness(0.6); 
+        }
+        #video-background.active {
+            opacity: 1;
+            filter: brightness(1.0); 
+        }
+        #text-container {
+            position: relative;
+            cursor: pointer;
+            z-index: 1001;
+            padding: 20px;
+        }
+        #start-text {
+            font-size: 5rem;
+            font-weight: 160  ;
+            color: rgb(255, 255, 255); 
+            text-shadow: 
+                0 0 10px rgb(255, 255, 255);
+            transition: transform 0.3s ease;
+        }
+        #start-text:hover {
+            transform: scale(1.05);
+        }
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1002;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+    <video id="video-background" loop muted playsinline>
+        <source src="maybe-ill-put-a-edit-here-sometime-i-made-this-but-couldnt-find-a-edit-to-put.mp4" type="video/mp4">
+        </video>
+
+    <div id="start-menu">
+        <canvas id="particle-canvas"></canvas>
+        <div id="text-container" onclick="startGame()">
+            <div id="start-text">@efelpy</div>
+        </div>
+        <p class="text-sm mt-4 opacity-70">Click on @efelpy</p>
+    </div>
+    <div id="custom-cursor"></div>
+    <canvas id="weather-canvas"></canvas>
+
+    <button id="weather-toggle-button" class="glass icon-button">
+        <img id="weather-icon" src="rain.png" alt="Weather Icon">
+        <span id="weather-text">Toggle Weather</span>
+    </button>
+
+    <svg width="0" height="0" style="position:absolute">
+        <defs>
+            <g id="status-online"><image href="statusOnline.png" width="24" height="24"/></g>
+            <g id="status-idle"><image href="statusIdle.png" width="24" height="24"/></g>
+            <g id="status-dnd"><image href="statusDoNotDisturb.png" width="24" height="24"/></g>
+            <g id="status-offline"><image href="statusInvisible.png" width="24" height="24"/></g>
+            <g id="status-invisible"><image href="statusInvisible.png" width="24" height="24"/></g>
+            <g id="status-mobile"><image href="statusMobile.png" width="24" height="24"/></g>
+            <g id="status-streaming"><image href="statusStreaming.png" width="24" height="24"/></g>
+        </defs>
+    </svg>
+
+    <div id="app" class="layout-wrapper w-full max-w-6xl"></div>
+
+<script>
+    // === START MENU LOGIC ===
+    const startMenu = document.getElementById('start-menu');
+    const bgVideo = document.getElementById('video-background');
+    const startText = document.getElementById('start-text');
+    const particleCanvas = document.getElementById('particle-canvas');
+    const pCtx = particleCanvas.getContext('2d');
+    
+    let textRect;
+
+    function resizeParticleCanvas() {
+        // Position the particle canvas over the text
+        textRect = startText.getBoundingClientRect();
+        particleCanvas.width = textRect.width;
+        particleCanvas.height = textRect.height;
+        particleCanvas.style.left = `${textRect.left}px`;
+        particleCanvas.style.top = `${textRect.top}px`;
+    }
+    window.addEventListener('resize', resizeParticleCanvas);
+    
+    function startGame() {
+        startMenu.classList.add('hidden');
+        bgVideo.classList.add('active');
+        bgVideo.muted = false; // Turn on audio
+        bgVideo.play().catch(error => {
+            console.warn("Autoplay failed, user interaction needed for video audio. Error:", error);
+        });
+        document.body.style.background = `#0a0a0a url('https://i.ibb.co/RTMqL1kp/2025-07-01-686408bd2adbd-e92fe07d-8c3e-4f51-bfeb-85ba54778e8aa.png') center/cover fixed`;
+    }
+
+    // Initialize particle canvas size and start animation loop
+    document.addEventListener("DOMContentLoaded", () => {
+        resizeParticleCanvas();
+        
+        // Bind the entire start menu to the click event
+        startMenu.addEventListener('click', startGame);
+        
+        // Start video muted and playing so it can transition smoothly on click
+        bgVideo.play();
+    });
+    // === END START MENU LOGIC ===
+
+
+    // === EXISTING JAVASCRIPT LOGIC (Unmodified) ===
+    const cursor = document.getElementById('custom-cursor');
+    document.addEventListener('mousemove', e => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+    });
+    document.addEventListener('mouseover', e => {
+        if (e.target.closest('a, .icon-button, .album-art-compact, .lyric-line, .activity-badge, button')) {
+            cursor.classList.add('hover');
+        } else {
+            cursor.classList.remove('hover');
+        }
+    });
+
+    const canvas = document.getElementById('weather-canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+
+    let weatherMode = 'rain';
+    const weatherToggleButton = document.getElementById('weather-toggle-button');
+    const weatherIcon = document.getElementById('weather-icon');
+    const weatherText = document.getElementById('weather-text');
+
+    // **SNOW CONSTANTS (Optimized for diagonal cover)**
+    const SNOW_SIZE = 2;
+    const SNOW_BASE_SPEED_Y = 1.8;
+    const SNOW_BASE_SPEED_X = 1.0;
+    const NUM_SNOWFLAKES = 250;
+    
+    // **Snow generation control**
+    let lastGenerationTime = 0;
+    const generationDelay = 1000 / NUM_SNOWFLAKES;
+    
+    // Rain particles (unaffected)
+    const raindrops = [];
+    class Raindrop {
+        constructor() { this.reset(); }
+        reset() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height - canvas.height;
+            this.length = Math.random() * 18 + 12;
+            this.speed = Math.random() * 6 + 10;
+            this.opacity = Math.random() * 0.4 + 0.3;
+        }
+        update() {
+            this.y += this.speed;
+            if (this.y > canvas.height) this.reset();
+        }
+        draw() {
+            ctx.strokeStyle = `rgba(174, 194, 224, ${this.opacity})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x, this.y + this.length);
+            ctx.stroke();
+        }
+    }
+    for (let i = 0; i < 180; i++) raindrops.push(new Raindrop());
+
+    let lastLightning = Date.now() + 2000;
+    let flashIntensity = 0;
+    const activeBolts = [];
+    function createLightning(x) {
+        const points = [];
+        let cx = x, cy = 0;
+        for (let i = 0; i < 22; i++) {
+            const offset = (Math.random() - 0.5) * 180;
+            cx += offset;
+            cy += canvas.height / 22 + Math.random() * 20;
+            points.push({x: cx, y: cy});
+        }
+        activeBolts.push({points, age: 0});
+        flashIntensity = 1;
+    }
+    function drawBolts() {
+        activeBolts.forEach((bolt, i) => {
+            const life = Math.max(0, 1 - bolt.age / 200);
+            if (life === 0) { activeBolts.splice(i, 1); return; }
+            ctx.globalAlpha = life;
+            ctx.strokeStyle = '#c0e8ff'; ctx.lineWidth = 8; ctx.shadowBlur = 40; ctx.shadowColor = '#a0d8ff';
+            ctx.beginPath(); ctx.moveTo(bolt.points[0].x, 0); bolt.points.forEach(p => ctx.lineTo(p.x, p.y)); ctx.stroke();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.shadowBlur = 20; ctx.shadowColor = '#e0f4ff';
+            ctx.beginPath(); ctx.moveTo(bolt.points[0].x, 0); bolt.points.forEach(p => ctx.lineTo(p.x, p.y)); ctx.stroke();
+            ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+            bolt.age++;
+        });
+    }
+
+const snowflakes = [];
+const SPAWN_PADDING = 300; 
+
+class Snowflake {
+    constructor(initial = true) {
+        this.size = SNOW_SIZE;
+        this.reset(initial);
+    }
+
+    reset(initial = false) {
+        this.y = initial ? Math.random() * canvas.height : (-20 - Math.random() * 60);
+        this.x = Math.random() * (canvas.width + SPAWN_PADDING * 2) - SPAWN_PADDING;
+        this.speedY = SNOW_BASE_SPEED_Y + Math.random() * 0.6;
+        this.speedX = SNOW_BASE_SPEED_X + (Math.random() * 0.6 - 0.3);
+        this.opacity = 0.35 + Math.random() * 0.65;
+    }
+
+    update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        if (this.y > canvas.height + 80) {
+            this.reset(false);
+        }
+    }
+
+    draw() {
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(255,255,255,${this.opacity})`;
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function createInitialSnow() {
+    snowflakes.length = 0;
+    for (let i = 0; i < NUM_SNOWFLAKES; i++) {
+        snowflakes.push(new Snowflake(true));
+    }
+}
+    
+    function animateWeather() {
+        const currentTime = Date.now();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        if (weatherMode === 'rain') {
+            if (flashIntensity > 0) {
+                ctx.fillStyle = `rgba(255,255,255,${flashIntensity*0.25})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                flashIntensity = Math.max(0, flashIntensity - 0.12);
+            }
+            drawBolts();
+            if (Date.now() - lastLightning > 15000 + Math.random() * 25000) {
+                createLightning(canvas.width * 0.2 + Math.random() * canvas.width * 0.6);
+                lastLightning = Date.now();
+            }
+            raindrops.forEach(d => { d.update(); d.draw(); });
+        } else if (weatherMode === 'snow') {
+            if (currentTime - lastGenerationTime > generationDelay && snowflakes.length < NUM_SNOWFLAKES) {
+                snowflakes.push(new Snowflake(false));
+                lastGenerationTime = currentTime;
+            }
+            snowflakes.forEach(f => { f.update(); f.draw(); });
+        }
+
+        requestAnimationFrame(animateWeather);
+    }
+    animateWeather();
+
+    function updateWeatherMode(mode) {
+        weatherMode = mode;
+        if (mode === 'rain') {
+            weatherText.textContent = 'Snow';
+            weatherIcon.src = 'snow.png';
+            snowflakes.length = 0;
+        } else if (mode === 'snow') {
+            weatherText.textContent = 'Off';
+            weatherIcon.src = 'off.png';
+            createInitialSnow();
+        } else {
+            weatherText.textContent = 'Rain';
+            weatherIcon.src = 'rain.png';
+            snowflakes.length = 0;
+        }
+    }
+
+    weatherToggleButton.addEventListener('click', () => {
+        if (weatherMode === 'rain') {
+            updateWeatherMode('snow');
+        } else if (weatherMode === 'snow') {
+            updateWeatherMode('off');
+        } else {
+            updateWeatherMode('rain');
+        }
+    });
+    updateWeatherMode('rain');
+
+    const DISCORD_ID = "757335355644051656";
+
+    function formatTime(ms) {
+        const s = Math.floor(ms / 1000);
+        return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+    }
+
+    let lastKey = "", currentSpotifyId = null;
+    let lyricsData = null, currentLyricIndex = -1, lyricsStatus = "loading";
+
+    async function fetchLyrics(trackName, artistName) {
+        try {
+            const res = await fetch(`https://lrclib.net/api/search?q=${encodeURIComponent(trackName + " " + artistName)}`);
+            const results = await res.json();
+            if (!results || results.length === 0) return null;
+            const track = results[0];
+            if (track.syncedLyrics) {
+                const lines = track.syncedLyrics.split('\n').filter(l => l.trim());
+                return lines.map(line => {
+                    const m = line.match(/\[(\d+):(\d+\.\d+)\](.*)/);
+                    if (m) {
+                        const time = (parseInt(m[1])*60 + parseFloat(m[2]))*1000;
+                        return { time, text: m[3].trim() || "..." };
+                    }
+                    return null;
+                }).filter(Boolean);
+            }
+            if (track.plainLyrics) {
+                return track.plainLyrics.split('\n').map((t,i) => ({ time: i*4000, text: t.trim() || "..." })).filter(l => l.text !== "...");
+            }
+            return null;
+        } catch (e) { return null; }
+    }
+
+    function updateActiveLyric(elapsed) {
+        if (!lyricsData || lyricsData.length === 0) return;
+        let newIndex = -1;
+        for (let i = 0; i < lyricsData.length; i++) {
+            if (elapsed >= lyricsData[i].time) newIndex = i;
+            else break;
+        }
+        if (newIndex !== currentLyricIndex) {
+            currentLyricIndex = newIndex;
+            document.querySelectorAll('.lyric-line').forEach((el,i) => {
+                el.classList.toggle('active', i === currentLyricIndex);
+            });
+            if (currentLyricIndex >= 0) {
+                document.querySelectorAll('.lyric-line')[currentLyricIndex]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+
+    function getGameActivity(activities) {
+        return activities?.find(a => a.type === 0 && a.name !== "Spotify") || null;
+    }
+
+    async function render(data) {
+        const d = data;
+        const avatar = d.discord_user.avatar ? `https://cdn.discordapp.com/avatars/${d.discord_user.id}/${d.discord_user.avatar}.${d.discord_user.avatar.startsWith('a_')?'gif':'png'}?size=256` : `https://cdn.discordapp.com/embed/avatars/0.png`;
+        const decoration = d.discord_user.avatar_decoration_data?.asset ? `https://cdn.discordapp.com/avatar-decoration-presets/${d.discord_user.avatar_decoration_data.asset}.png?size=512` : null;
+        const spotify = d.listening_to_spotify ? d.spotify : null;
+        const gameActivity = getGameActivity(d.activities);
+
+        const newKey = JSON.stringify(data);
+        if (newKey === lastKey) return;
+        lastKey = newKey;
+
+        if (spotify && spotify.track_id !== currentSpotifyId) {
+            currentSpotifyId = spotify.track_id;
+            lyricsData = null;
+            currentLyricIndex = -1;
+            lyricsStatus = "loading";
+            renderUI(d, avatar, decoration, spotify, null, lyricsStatus, gameActivity);
+            const lyrics = await fetchLyrics(spotify.song, spotify.artist);
+            lyricsData = lyrics;
+            lyricsStatus = lyrics ? "available" : "no-lyrics";
+            renderUI(d, avatar, decoration, spotify, lyrics, lyricsStatus, gameActivity);
+        } else {
+            renderUI(d, avatar, decoration, spotify, lyricsData, lyricsStatus, gameActivity);
+        }
+    }
+
+    function renderUI(d, avatar, decoration, spotify, lyrics, status, gameActivity) {
+        const statusIcon = d.discord_status;
+        const gameImg = gameActivity?.assets?.large_image ? (gameActivity.assets.large_image.startsWith('spotify:') ? `https://i.scdn.co/image/${gameActivity.assets.large_image.split(':')[1]}` : `https://cdn.discordapp.com/app-assets/${gameActivity.application_id}/${gameActivity.assets.large_image}.png?size=64`) : null;
+
+        document.getElementById("app").innerHTML = `
+            <div class="layout-container">
+                <div class="left-column">
+                    <div class="discord-card-wrapper w-full max-w-md">
+                        ${gameActivity ? `
+                            <div class="game-activity-centered glass rounded-xl shadow-2xl border border-white/10">
+                                <div class="flex gap-4 items-center">
+                                    ${gameImg ? `<img class="w-12 h-12 rounded-lg object-cover shadow-lg" src="${gameImg}">` : `<div class="w-12 h-12 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-xl">Game</div>`}
+                                    <div class="min-w-0 flex-1">
+                                        <div class="text-base font-bold text-white truncate">Playing ${gameActivity.name}</div>
+                                        ${gameActivity.details ? `<div class="text-sm text-white/70 truncate">${gameActivity.details}</div>` : ''}
+                                        ${gameActivity.state ? `<div class="text-sm text-white/60 truncate">${gameActivity.state}</div>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        <div class="glass p-8 w-full max-w-md relative">
+                            <div class="flex items-center gap-7">
+                                <div class="relative">
+                                    <img src="${avatar}" class="w-24 h-24 rounded-full object-cover">
+                                    ${decoration ? `<img src="${decoration}" class="absolute inset-0 w-full h-full rounded-full object-contain scale-[1.1]">` : ''}
+                                    <div class="relative">
+                                        <div class="status-icon-glass"></div>
+                                        <svg class="status-icon" viewBox="0 0 24 24"><use href="#status-${statusIcon}"></use></svg>
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <h1 class="text-3xl font-bold">${d.discord_user.display_name || d.discord_user.username}</h1>
+                                    <p class="text-sm opacity-60">@${d.discord_user.username}</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-center gap-5 pt-6 mt-6 border-t border-white/10">
+                                <a href="https://www.instagram.com/efel.py/" class="w-12 h-12 glass rounded-xl flex items-center justify-center icon-button"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v13/icons/instagram.svg"></a>
+                                <a href="https://tr.pinterest.com/efelpy/_profile/" class="w-12 h-12 glass rounded-xl flex items-center justify-center icon-button"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v13/icons/pinterest.svg"></a>
+                                <a href="https://discord.com/users/757335355644051656" class="w-12 h-12 glass rounded-xl flex items-center justify-center icon-button"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v13/icons/discord.svg"></a>
+                                <a href="https://www.roblox.com/users/1188444165/profile" class="w-12 h-12 glass rounded-xl flex items-center justify-center icon-button"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v13/icons/roblox.svg"></a>
+                                <a href="#" class="relative w-12 h-12 glass rounded-xl flex items-center justify-center icon-button group">
+                                    <img src="https://cdn.jsdelivr.net/npm/simple-icons@v13/icons/riotgames.svg">
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-4 py-2 bg-black/90 text-white text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"> Efel#pyy <div class="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-black/90"></div> </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    ${spotify ? `
+                        <div class="glass p-6 w-full max-w-md"> 
+                            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-white/10">
+                                <svg class="spotify-icon" fill="#1ed760" viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                                <span class="text-sm font-semibold opacity-90">Now Playing</span>
+                                <a href="https://open.spotify.com/track/${spotify.track_id}" target="_blank" rel="noopener" class="ml-auto text-xs opacity-60 hover:opacity-100 hover:text-[#1ed760]">Open</a>
+                            </div>
+                            <div class="flex gap-4">
+                                <a href="https://open.spotify.com/track/${spotify.track_id}" target="_blank" rel="noopener">
+                                    <img class="album-art-compact" src="${spotify.album_art_url}" alt="Album Art">
+                                </a>
+                                <div class="flex-1 min-w-0">
+                                    <div class="song-title">${spotify.song}</div>
+                                    <div class="song-artist">${spotify.artist}</div>
+                                    <div class="text-xs opacity-40 mt-1">${spotify.album}</div>
+                                    <div class="mt-3">
+                                        <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+                                        <div class="text-xs opacity-50 mt-1.5 flex justify-between">
+                                            <span id="time-current">0:00</span>
+                                            <span>${formatTime(spotify.timestamps.end - spotify.timestamps.start)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+                ${spotify ? `
+                    <div class="glass p-6 w-full max-w-md">
+                        <div class="flex items-center gap-2 mb-4 pb-3 border-b border-white/10">
+                            <span class="text-sm font-semibold opacity-90">Lyrics</span>
+                        </div>
+                        <div class="lyrics-container">
+                            ${status === "loading" ? `<div class="flex items-center justify-center h-48 opacity-60"><div class="animate-pulse">Loading lyrics...</div></div>` : status === "no-lyrics" ? `<div class="flex items-center justify-center h-48 opacity-60">No lyrics available</div>` : lyrics && lyrics.length > 0 ? lyrics.map((l,i) => `<div class="lyric-line" data-index="${i}">${l.text}</div>`).join('') : `<div class="flex items-center justify-center h-48 opacity-60">No lyrics found</div>`}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    setInterval(() => {
+        const fill = document.getElementById("progress-fill");
+        const time = document.getElementById("time-current");
+        if (!fill || !time || !currentSpotifyId || !window.currentSpotifyData) return;
+        const s = window.currentSpotifyData;
+        const elapsed = Date.now() - s.timestamps.start;
+        const duration = s.timestamps.end - s.timestamps.start;
+        const percent = Math.min((elapsed / duration) * 100, 100);
+        fill.style.width = percent + "%";
+        time.textContent = formatTime(elapsed);
+        updateActiveLyric(elapsed);
+    }, 400);
+
+    window.currentSpotifyData = null;
+    const originalRender = render;
+    render = function(data) {
+        if (data.spotify) window.currentSpotifyData = data.spotify;
+        else window.currentSpotifyData = null;
+        return originalRender(data);
+    };
+
+    let ws = null, heartbeatInterval = null, reconnectTimer = null;
+    function connectWebSocket() {
+        if (ws) ws.close();
+        ws = new WebSocket("wss://api.lanyard.rest/socket");
+        ws.onmessage = e => {
+            const msg = JSON.parse(e.data);
+            if (msg.op === 1) {
+                ws.send(JSON.stringify({ op: 2, d: { subscribe_to_id: DISCORD_ID } }));
+                clearInterval(heartbeatInterval);
+                heartbeatInterval = setInterval(() => ws.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ op: 3 })), msg.d.heartbeat_interval);
+            }
+            if (msg.op === 0 && (msg.t === "INIT_STATE" || msg.t === "PRESENCE_UPDATE")) {
+                render(msg.d);
+            }
+        };
+        ws.onclose = () => {
+            clearInterval(heartbeatInterval);
+            clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(connectWebSocket, 5000);
+        };
+    }
+    connectWebSocket();
+</script>
+</body>
+</html>
