@@ -486,7 +486,7 @@ function createInitialSnow() {
 
     function renderUI(d, avatar, decoration, spotify, lyrics, status, gameActivity) {
         const statusIcon = d.discord_status;
-        const gameImg = gameActivity?.assets?.large_image ? (gameActivity.assets.large_image.startsWith('spotify:') ? `https://i.scdn.co/image/${gameActivity.assets.large_image.split(':')[1]}` : `https://cdn.discordapp.com/app-assets/${gameActivity.application_id}/${gameActivity.assets.large_image}.png?size=64`) : null;
+        const gameImg = (console.log("app:", gameActivity?.application_id, "assets:", gameActivity?.assets, "large:", gameActivity?.assets?.large_image), gameActivity?.assets?.large_image ? (gameActivity.assets.large_image.startsWith("spotify:") ? `https://i.scdn.co/image/${gameActivity.assets.large_image.split(":")[1]}` : gameActivity.assets.large_image.startsWith("mp:") ? `https://media.discordapp.net/${gameActivity.assets.large_image.replace("mp:", "")}` : `https://cdn.discordapp.com/app-assets/${gameActivity.application_id}/${gameActivity.assets.large_image}.png?size=64`) : `https://dcdn.dstn.to/app-icons/${gameActivity.application_id}`);
 
         document.getElementById("app").innerHTML = `
             <div class="layout-container">
